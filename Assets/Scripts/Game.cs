@@ -8,8 +8,10 @@ using UnityEngine.SceneManagement;
 public class Game : MonoBehaviour
 {
     char player = 'x', opponent = 'o';
-
+    
     bool gameOver = false;
+
+    int turn = 0;
 
     public Button[] grids; 
 
@@ -17,11 +19,14 @@ public class Game : MonoBehaviour
     public Sprite zero;
 
     public Text winnerText;
+    public Text playerText;
+    public Text aiText;
+    public Text turnText;
+
     public GameObject yourTurn;
     public GameObject panel;
 
-    public Text playerText;
-    public Text aiText;
+
 
     char[,] board = new char[,]
    {
@@ -32,24 +37,34 @@ public class Game : MonoBehaviour
 
     void Start()
     {
+        int isAI = PlayerPrefs.GetInt("isAI");
 
-        int option = PlayerPrefs.GetInt("option");
+        if (isAI == 1)
+        {
+            int option = PlayerPrefs.GetInt("option");
 
-        if(option == 1)
-        {
-            setComputerAsX();
-        }
-        else if(option == 2)
-        {
-            int lastWinner = PlayerPrefs.GetInt("lastWinner",1);
-            if (lastWinner == 0)
+            if (option == 1)
+            {
                 setComputerAsX();
+            }
+            else if (option == 2)
+            {
+                int lastWinner = PlayerPrefs.GetInt("lastWinner", 1);
+                if (lastWinner == 0)
+                    setComputerAsX();
+            }
+            else if (option == 3)
+            {
+                int lastX = PlayerPrefs.GetInt("lastX", 1);
+                if (lastX == 1)
+                    setComputerAsX();
+            }
         }
-        else if(option == 3)
+        else
         {
-            int lastX = PlayerPrefs.GetInt("lastX", 1);
-            if (lastX == 1)
-                setComputerAsX();
+            playerText.text = "Player 1: X";
+            aiText.text = "Player 2: O";
+            turnText.text = "Player 1's turn";
         }
     }
 
@@ -198,6 +213,9 @@ public class Game : MonoBehaviour
 
     public void moveByPlayer(string i)
     {
+        turn += 1;
+
+        Handheld.Vibrate();
         string[] indices = i.Split(' ');
         int x = int.Parse(indices[0]);
         int y = int.Parse(indices[1]);
@@ -205,20 +223,39 @@ public class Game : MonoBehaviour
 
         board[x, y] = player;
 
-        if(player == 'x')
+        if (player == 'x' && PlayerPrefs.GetInt("isAI") == 1)
+            grids[index].GetComponent<Image>().sprite = cross;
+        else if (player == 'o' && PlayerPrefs.GetInt("isAI") == 1)
+            grids[index].GetComponent<Image>().sprite = zero;
+        else if (turn % 2 == 1 && PlayerPrefs.GetInt("isAI") != 1)
             grids[index].GetComponent<Image>().sprite = cross;
         else
+        {
             grids[index].GetComponent<Image>().sprite = zero;
+            board[x, y] = opponent;
+        }
 
+       
+       
         grids[index].interactable = false;
 
-        moveByComputer();
+        if (PlayerPrefs.GetInt("isAI") == 1)
+            moveByComputer();
+        else
+        {
+            if(turn%2 == 1)
+                turnText.text = "Player 2's turn";
+            else
+                turnText.text = "Player 1's turn";
+        }
     }
 
 
     void moveByComputer()
     {
-        yourTurn.SetActive(false);
+        if (PlayerPrefs.GetInt("isAI") == 1)
+            yourTurn.SetActive(false);
+
         int bestScore = int.MaxValue;
         int bestX = -1, bestY = -1;
         int c = 0;
@@ -277,7 +314,7 @@ public class Game : MonoBehaviour
 
     IEnumerator setPanelActive()
     {
-        yield return new WaitForSeconds(.75f);
+        yield return new WaitForSeconds(.85f);
         panel.SetActive(true);
     }
 
@@ -287,6 +324,11 @@ public class Game : MonoBehaviour
 
         if (gameOver)
         {
+            foreach(Button elem in grids)
+            {
+                elem.interactable = false;
+            }
+
             if (player == 'x')
                 PlayerPrefs.SetInt("lastX", 1);
             else
@@ -301,16 +343,25 @@ public class Game : MonoBehaviour
 
         if(eval == 10)
         {
-            if (player == 'x')
+            int isAI = PlayerPrefs.GetInt("isAI");
+
+            if (isAI == 1)
             {
-                winnerText.text = "You Win";
-                PlayerPrefs.SetInt("lastWinner", 1);
+                if (player == 'x')
+                {
+                    winnerText.text = "You Win";
+                    PlayerPrefs.SetInt("lastWinner", 1);
+                }
+                else
+                {
+                    winnerText.text = "You Lose";
+                    PlayerPrefs.SetInt("lastWinner", 0);
+
+                }
             }
             else
             {
-                winnerText.text = "You Lose";
-                PlayerPrefs.SetInt("lastWinner", 0);
-
+                winnerText.text = "Winner: Player 1";
             }
 
             gameOver = true;
@@ -318,15 +369,25 @@ public class Game : MonoBehaviour
         }
         else if(eval == -10)
         {
-            if (player == 'o')
+            int isAI = PlayerPrefs.GetInt("isAI");
+
+            if (isAI == 1)
             {
-                winnerText.text = "You Win";
-                PlayerPrefs.SetInt("lastWinner", 1);
+                if (player == 'o')
+                {
+                    winnerText.text = "You Win";
+                    PlayerPrefs.SetInt("lastWinner", 1);
+                }
+                else
+                {
+                    winnerText.text = "You Lose";
+                    PlayerPrefs.SetInt("lastWinner", 0);
+
+                }
             }
             else
             {
-                winnerText.text = "You Lose";
-                PlayerPrefs.SetInt("lastWinner", 0);
+                winnerText.text = "Winner: Player 2";
             }
 
             gameOver = true;

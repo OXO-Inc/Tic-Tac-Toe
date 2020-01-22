@@ -19,6 +19,8 @@ public class MainMenu : MonoBehaviour
         if (PlayerPrefs.HasKey("option") == false)
             PlayerPrefs.SetInt("option", 0);
 
+        dropdown.value = PlayerPrefs.GetInt("option");
+
     }
 
     public void optionSelected(int index)
@@ -29,6 +31,13 @@ public class MainMenu : MonoBehaviour
     public void playWithComputer()
     {
         SceneManager.LoadScene("Game");
+        PlayerPrefs.SetInt("isAI", 1);
+    }
+
+    public void playWithHuman()
+    {
+        SceneManager.LoadScene("Game");
+        PlayerPrefs.SetInt("isAI", 0);
     }
 
     public void Quit()
