@@ -63,4 +63,9 @@ public class MainMenu : MonoBehaviour
         quit.interactable = true;
     }
 
+    public void MoreGames()
+    {
+        Application.OpenURL("https://play.google.com/store/apps/dev?id=7338777534892840680");
+    }
+
 }
